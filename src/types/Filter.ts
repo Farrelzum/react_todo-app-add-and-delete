@@ -1,8 +1,8 @@
 export const FilterValues = {
-  ALL: 'All' as const,
-  ACTIVE: 'Active' as const,
-  COMPLETED: 'Completed' as const,
-};
+  ALL: 'All',
+  ACTIVE: 'Active',
+  COMPLETED: 'Completed',
+} as const;
 
 export type Filter =
   | typeof FilterValues.ALL

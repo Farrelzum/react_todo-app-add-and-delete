@@ -1,6 +1,6 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
 /* eslint-disable jsx-a11y/control-has-associated-label */
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { UserWarning } from './UserWarning';
 import { deleteTodo, getTodos, postTodo, USER_ID } from './api/todos';
 import { Todo } from './types/Todo';
@@ -16,13 +16,12 @@ export const App: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<ErrorType | null>(null);
   const [filter, setFilter] = useState<Filter>('All');
   const [filteredTodos, setFilteredTodos] = useState<Todo[]>([]);
-  const [inputValue, setInputValue] = useState('');
   const [tempTodo, setTempTodo] = useState<Todo | null>(null);
   const [deleteTodoById, setDeleteTodoById] = useState<number[]>([]);
   const [isAddingTodo, setIsAddingTodo] = useState(false);
-  const [shouldFocusInput, setShouldFocusInput] = useState(false);
-
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [lastOperationTimestamp, setLastOperationTimestamp] = useState(
+    Date.now(),
+  );
 
   useEffect(() => {
     let newTodos = [...todos];
@@ -57,13 +56,6 @@ export const App: React.FC = () => {
       });
   }, []);
 
-  useEffect(() => {
-    if (shouldFocusInput && inputRef.current) {
-      inputRef.current.focus();
-      setShouldFocusInput(false); // Zresetuj flagę, aby nie fokusować ponownie przy każdym renderowaniu
-    }
-  }, [shouldFocusInput]);
-
   const handleToggleTodo = (todoId: number) => {
     const updatedTodos = todos.map(todo => {
       return todo.id === todoId
@@ -74,27 +66,12 @@ export const App: React.FC = () => {
     setTodos(updatedTodos);
   };
 
-  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setInputValue(event.target.value);
-  };
-
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    const trimmedTitle = inputValue.trim();
-
-    if (trimmedTitle === '') {
-      setErrorMessage(ErrorType.EMPTY_TITLE);
-      setTimeout(() => setErrorMessage(null), 3000);
-
-      return;
-    }
-
+  const handleAddTodo = async (title: string) => {
     setIsAddingTodo(true);
 
     const todoToSend = {
       userId: USER_ID,
-      title: trimmedTitle,
+      title: title,
       completed: false,
     };
 
@@ -107,22 +84,19 @@ export const App: React.FC = () => {
 
     setTempTodo(temporaryTodo);
 
-    postTodo(todoToSend)
-      .then(newTodoFromApi => {
-        setTodos(prevTodos => [...prevTodos, newTodoFromApi]);
+    try {
+      const newTodoFromApi = await postTodo(todoToSend);
 
-        setInputValue('');
-      })
-      .catch(() => {
-        setErrorMessage(ErrorType.ADD_TODO_FAILED);
-        setTimeout(() => setErrorMessage(null), 3000);
-      })
-      .finally(() => {
-        setTempTodo(null);
-        inputRef.current?.focus();
-        setIsAddingTodo(false);
-        setShouldFocusInput(true);
-      });
+      setTodos(prevTodos => [...prevTodos, newTodoFromApi]);
+    } catch (error) {
+      setErrorMessage(ErrorType.ADD_TODO_FAILED);
+      setTimeout(() => setErrorMessage(null), 3000);
+      throw error;
+    } finally {
+      setTempTodo(null);
+      setIsAddingTodo(false);
+      setLastOperationTimestamp(Date.now());
+    }
   };
 
   const handleDeleteTodo = (id: number) => {
@@ -140,7 +114,7 @@ export const App: React.FC = () => {
         setDeleteTodoById(prevIds =>
           prevIds.filter(currentId => currentId !== id),
         );
-        setShouldFocusInput(true);
+        setLastOperationTimestamp(Date.now());
       });
   };
 
@@ -185,7 +159,7 @@ export const App: React.FC = () => {
         setDeleteTodoById(prevIds =>
           prevIds.filter(id => !idsToProcess.includes(id)),
         );
-        setShouldFocusInput(true);
+        setLastOperationTimestamp(Date.now());
       });
   };
 
@@ -199,11 +173,10 @@ export const App: React.FC = () => {
 
       <div className="todoapp__content">
         <Header
-          inputRef={inputRef}
-          inputValue={inputValue}
           isAddingTodo={isAddingTodo}
-          handleSubmit={handleSubmit}
-          handleInputChange={handleInputChange}
+          handleAddTodo={handleAddTodo}
+          setErrorMessage={setErrorMessage}
+          focusTrigger={lastOperationTimestamp}
         />
 
         {todos.length > 0 && (

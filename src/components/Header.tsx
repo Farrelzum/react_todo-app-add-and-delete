@@ -1,17 +1,18 @@
+import { ErrorType } from '../types/ErrorType';
+import { NewTodoInput } from './NewTodoInput';
+
 interface Props {
-  inputRef: React.RefObject<HTMLInputElement> | null;
-  inputValue: string;
   isAddingTodo: boolean;
-  handleSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
-  handleInputChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  handleAddTodo: (title: string) => Promise<void>;
+  setErrorMessage: React.Dispatch<React.SetStateAction<ErrorType | null>>;
+  focusTrigger: number;
 }
 
 export const Header: React.FC<Props> = ({
-  inputRef,
-  inputValue,
   isAddingTodo,
-  handleSubmit,
-  handleInputChange,
+  handleAddTodo,
+  setErrorMessage,
+  focusTrigger,
 }) => {
   return (
     <header className="todoapp__header">
@@ -23,19 +24,12 @@ export const Header: React.FC<Props> = ({
       />
 
       {/* Add a todo on form submit */}
-      <form onSubmit={handleSubmit}>
-        <input
-          data-cy="NewTodoField"
-          type="text"
-          className="todoapp__new-todo"
-          placeholder="What needs to be done?"
-          ref={inputRef}
-          value={inputValue}
-          onChange={handleInputChange}
-          autoFocus
-          disabled={isAddingTodo}
-        />
-      </form>
+      <NewTodoInput
+        onSubmit={handleAddTodo}
+        isDisabled={isAddingTodo}
+        setErrorMessage={setErrorMessage}
+        focusTrigger={focusTrigger}
+      />
     </header>
   );
 };

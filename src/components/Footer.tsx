@@ -1,3 +1,4 @@
+import classNames from 'classnames';
 import { FilterValues, Filter } from '../types/Filter';
 import { Todo } from '../types/Todo';
 
@@ -24,7 +25,9 @@ export const Footer: React.FC<Props> = ({
       <nav className="filter" data-cy="Filter">
         <a
           href="#/"
-          className={`filter__link ${filter === FilterValues.ALL ? 'selected' : ''}`}
+          className={classNames('filter__link', {
+            selected: filter === FilterValues.ALL,
+          })}
           data-cy="FilterLinkAll"
           onClick={() => setFilter('All')}
         >
@@ -33,7 +36,9 @@ export const Footer: React.FC<Props> = ({
 
         <a
           href="#/active"
-          className={`filter__link ${filter === FilterValues.ACTIVE ? 'selected' : ''}`}
+          className={classNames('filter__link', {
+            selected: filter === FilterValues.ACTIVE,
+          })}
           data-cy="FilterLinkActive"
           onClick={() => setFilter('Active')}
         >
@@ -42,7 +47,9 @@ export const Footer: React.FC<Props> = ({
 
         <a
           href="#/completed"
-          className={`filter__link ${filter === FilterValues.COMPLETED ? 'selected' : ''}`}
+          className={classNames('filter__link', {
+            selected: filter === FilterValues.COMPLETED,
+          })}
           data-cy="FilterLinkCompleted"
           onClick={() => setFilter('Completed')}
         >
